@@ -8,10 +8,14 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import org.apache.cordova.PluginResult;
+import org.apache.cordova.CallbackContext;
+import android.view.MotionEvent;
 
 
 
 public class AndroidProgressHUD extends Dialog {
+	public static CallbackContext callbackContext;
 	Context context;
 	public AndroidProgressHUD(Context context) {
 		super(context);
@@ -29,24 +33,25 @@ public class AndroidProgressHUD extends Dialog {
         AnimationDrawable spinner = (AnimationDrawable) imageView.getBackground();
         spinner.start();
     }
-	
+
 	public void setMessage(CharSequence message) {
 		if(message != null && message.length() > 0) {
-			findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName())).setVisibility(View.VISIBLE);			
-			TextView txt = (TextView)findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName()));  
+			findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName())).setVisibility(View.VISIBLE);
+			TextView txt = (TextView)findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName()));
 			txt.setText(message);
 			txt.invalidate();
 		}
 	}
-	
+
 	public static AndroidProgressHUD show(Context context, CharSequence message, boolean indeterminate, boolean cancelable,
-			OnCancelListener cancelListener) {
+			OnCancelListener cancelListener, CallbackContext callbackContext) {
 					 //R.style.ProgressHUD
+		AndroidProgressHUD.callbackContext = callbackContext;
 		AndroidProgressHUD dialog = new AndroidProgressHUD(context,context.getResources().getIdentifier("ProgressHUD", "style", context.getPackageName()) );
 		dialog.setTitle("");
 		dialog.setContentView(context.getResources().getIdentifier("progress_hud", "layout", context.getPackageName()));
 		if(message == null || message.length() == 0) {
-			dialog.findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName())).setVisibility(View.GONE);			
+			dialog.findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName())).setVisibility(View.GONE);
 		} else {
 			TextView txt = (TextView)dialog.findViewById(context.getResources().getIdentifier("message", "id", context.getPackageName()) );
 			txt.setText(message);
@@ -54,11 +59,31 @@ public class AndroidProgressHUD extends Dialog {
 		dialog.setCancelable(cancelable);
 		dialog.setOnCancelListener(cancelListener);
 		dialog.getWindow().getAttributes().gravity=Gravity.CENTER;
-		WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();  
+		WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
 		lp.dimAmount=0.2f;
-		dialog.getWindow().setAttributes(lp); 
+		dialog.getWindow().setAttributes(lp);
 		//dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
 		dialog.show();
 		return dialog;
-	}	
+	}
+
+	private void sendCallback() {
+		PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
+		pluginResult.setKeepCallback(true);
+		callbackContext.sendPluginResult(pluginResult);
+	}
+
+	@Override
+	public void onBackPressed() {
+		sendCallback();
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			sendCallback();
+			return true;
+		}
+		return false;
+	}
 }

@@ -11,6 +11,9 @@
 - (void)show:(CDVInvokedUrlCommand*)command
 {
 	NSString* text = [command.arguments objectAtIndex:0];
+	if (self.activityIndicator) {
+		[self.activityIndicator hide:YES];
+	}
 	self.activityIndicator = nil;
 	self.activityIndicator = [MBProgressHUD showHUDAddedTo:self.webView.superview animated:YES];
 	self.activityIndicator.mode = MBProgressHUDModeIndeterminate;
